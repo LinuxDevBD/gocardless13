@@ -1,0 +1,185 @@
+<odoo>
+  
+<record model="ir.actions.act_window" id="mandates_action">
+  <field name="name">GoCardless Mandates</field>
+  <field name="view_mode">tree,form</field>
+  <field name="target">current</field>
+  <field name="res_model">gocardless.mandate</field>
+  <field name="help" type="html">
+    <p class="oe_view_nocontent_create">No mandates currently exist!</p>
+  </field>
+</record>
+
+<record model="ir.ui.view" id="gocardless_mandates_view_tree">
+  <field name="name">GoCardless Mandates</field>
+  <field name="model">gocardless.mandate</field>
+  <field name="arch" type="xml">
+    <tree default_order="gc_mandate_id desc" string="Mandates" delete="false">
+      <field name="gc_mandate_id" />
+      <field name="gc_state" />
+      <field name="gc_last_state_change" />
+      <field name="partner_id" />
+    </tree>
+  </field>
+</record>
+
+<record model="ir.ui.view" id="gocardless_mandates_view_form">
+  <field name="name">GoCardless Mandate</field>
+  <field name="model">gocardless.mandate</field>
+  <field name="arch" type="xml">
+    <form>
+      <sheet>
+        <field name="id" invisible="1" />
+        <div attrs="{'invisible':[('id','!=',False)]}">
+          <h1>Create Mandate</h1>
+          <p><b>Please note:</b> this form is intended to allow the manual entry of existing GoCardless mandates
+          which have been created elsewhere. It is your responsibility to make sure that details entered here
+          are correct - entering incorrect details may cause the integration to behave unexpectedly.</p>
+          <separator />
+        </div>
+        <group string="Mandate" col="4">
+          <field name="gc_mandate_id" attrs="{'readonly':[('id','!=',False)]}" />
+          <field name="gc_state" attrs="{'readonly':[('id','!=',False)]}" />
+          <field name="gc_last_state_change" readonly="1" />
+          <field name="partner_id" readonly="0" />
+        </group>
+        <div attrs="{'invisible':[('id','=',False)]}">
+          <separator />
+          <field name="event_ids" />
+        </div>
+      </sheet>
+    </form>
+  </field>
+</record>
+
+
+<record model="ir.actions.act_window" id="payments_action">
+  <field name="name">GoCardless Payments</field>
+  <field name="view_mode">tree,form</field>
+  <field name="target">current</field>  
+  <field name="res_model">gocardless.payment</field>
+</record>
+
+<record model="ir.actions.act_window" id="payments_pop_action">
+  <field name="name">GoCardless Payments</field>
+  <field name="view_mode">form</field>
+  <field name="target">new</field>  
+  <field name="res_model">gocardless.payment</field>
+</record>
+
+<record model="ir.ui.view" id="gocardless_payments_view_tree">
+  <field name="name">GoCardless Payments</field>
+  <field name="model">gocardless.payment</field>
+  <field name="arch" type="xml">
+    <tree default_order="gc_payment_id desc" create="false" delete="false">
+      <field name="claim_date" />
+      <field name="gc_payment_id" />
+      <field name="gc_payment_state" />
+      <field name="post_date" />
+      <field name="payout_date" />
+    </tree>
+  </field>
+</record>
+
+<record model="ir.ui.view" id="gocardless_payments_view_form">
+  <field name="name">GoCardless Payments</field>
+  <field name="model">gocardless.payment</field>
+  <field name="arch" type="xml">
+    <form edit="false" create="false">
+      <sheet>
+        <header>
+          <button type="object" name="gc_cancel_payment" string="Cancel Payment" attrs="{'invisible':[('gc_payment_state','not in',['pending','created'])]}"
+            groups="account.group_account_manager" confirm="Are you sure you want to cancel this payment?" />
+        </header>
+        <group col="4" string="Payment">
+          <field name="gc_payment_id" readonly="1" />
+          <field name="gc_payment_state" readonly="1" />
+          <field name="amount" readonly="1" />
+          <field name="claim_date" readonly="1" />
+          <field name="post_date" readonly="1" />
+          <field name="payout_date" readonly="1" />
+          <field name="invoice_id" readonly="1" />
+        </group>        
+        <separator />
+        <field name="event_ids" />
+      </sheet>
+    </form>
+  </field>
+</record>
+
+<record model="ir.actions.act_window" id="events_action">
+  <field name="name">GoCardless Events</field>
+  <field name="view_mode">tree,form</field>
+  <field name="target">current</field>  
+  <field name="res_model">gocardless.event</field>
+</record>
+
+<record model="ir.ui.view" id="gocardless_events_view_tree">
+  <field name="name">GoCardless Events</field>
+  <field name="model">gocardless.event</field>
+  <field name="arch" type="xml">
+    <tree default_order="created_at desc" create="false" delete="false">
+      <field name="created_at" />
+      <field name="event_id" />
+      <field name="resource_type" />
+      <field name="action" />
+      <field name="cause" />
+      <field name="ev_origin" />
+      <field name="mandate_id" attrs="{'invisible':[('mandate_id','=',False)]}" />
+      <field name="payment_id" attrs="{'invisible':[('payment_id','=',False)]}" />
+    </tree>
+  </field>
+</record>
+
+<record model="ir.ui.view" id="gocardless_events_view_form">
+  <field name="name">GoCardless Events</field>
+  <field name="model">gocardless.event</field>
+  <field name="arch" type="xml">
+    <form create="false" edit="false">
+    <sheet>
+      <group col="4" string="Event">
+        <field name="created_at" readonly="1" />
+        <field name="event_id" readonly="1" />
+        <field name="resource_type" readonly="1" />
+        <field name="action" readonly="1" />
+        <field name="cause" readonly="1" />
+        <field name="ev_description" readonly="1" />
+        <field name="ev_origin" readonly="1" />
+        <field name="mandate_id" readonly="1" attrs="{'invisible':[('mandate_id','=',False)]}" />
+        <field name="payment_id" readonly="1" attrs="{'invisible':[('payment_id','=',False)]}" />
+      </group>
+    </sheet>
+    </form>
+  </field>
+</record>
+
+<menuitem id="menu_gocardless_main"
+  name="GoCardless"
+  web_icon="gocardless,static/description/icon.png"
+  groups="account.group_account_manager"
+  />
+<menuitem id="menu_gocardless" 
+  name="GoCardless - Main Menu"
+  parent="menu_gocardless_main"
+/>
+
+<menuitem id="mandates_menu"
+  name="Mandates"
+  parent="menu_gocardless"
+  action="mandates_action"
+/>
+
+<menuitem id="payments_menu"
+  name="Payments"
+  parent="menu_gocardless"
+  action="payments_action"
+/>
+
+<menuitem id="events_menu"
+  name="Events"
+  parent="menu_gocardless"
+  action="events_action"
+/>
+
+
+</odoo>

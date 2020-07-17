@@ -1,0 +1,39 @@
+<odoo>
+    <record id="gocardless_charge_wizard_view" model="ir.ui.view">
+        <field name="name">gocardless.charge.wizard.form</field>
+        <field name="model">gocardless.charge.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Confirm Draft Invoices">
+                <p class="oe_grey">
+                    This will attempt to take payments for all the selected invoices by GoCardless.
+                    Only open invoices can be charged, and if payment has already been attempted this action will not retry the payment(s).
+                    If you are ready to continue, click "Take Payments".
+                </p>
+                <footer>
+                    <button string="Take Payments" name="take_payment" type="object" default_focus="1" class="btn-primary"/>
+                    <button string="Cancel" class="btn-default" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <act_window id="action_gocardless_charge_wizard"
+        name="Take Payment by GoCardless"
+        res_model="gocardless.charge.wizard" binding_model="account.move"
+        view_mode="form" target="new" />
+
+<!-- <act_window
+            name="Send &amp; print"
+            id="invoice_send"
+            res_model="account.invoice.send"
+            binding_model="account.move"
+            binding_views="list"
+            view_mode="form"
+            target="new"
+            context="{
+                'default_template_id': ref('account.email_template_edi_invoice'),
+                'mark_invoice_as_sent': True,
+            }"
+            groups="account.group_account_invoice"/>         -->
+
+</odoo>

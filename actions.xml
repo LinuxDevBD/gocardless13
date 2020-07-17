@@ -1,0 +1,9 @@
+<odoo>
+    <record id="gc_check_mandate" model="ir.actions.server">
+        
+    </record>
+
+    <record id="gc_act_run_setup_batch" model="ir.actions.server">
+    
+    </record>
+</odoo>

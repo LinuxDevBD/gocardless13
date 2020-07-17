@@ -1,0 +1,181 @@
+<odoo>
+    <record id="gocardless_invoice_tree" model="ir.ui.view">
+        <field name="name">account.invoice.tree.gocardless</field>           
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_invoice_tree" />
+        <field name="arch" type="xml">
+            <field name="state" position="before">
+                <field name="gc_payment_attempted" readonly="1" />
+            </field>
+        </field>
+    </record>
+
+    <record id="gocardless_invoice_view" model="ir.ui.view">
+        <field name="name">account.move.form.gocardless</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form" />
+        <field name="arch" type="xml">
+            <header position="inside">
+                <field name="gc_display_gc" invisible="1" />
+                <field name="gc_payment_attempted" invisible="1" />
+                <field name="gc_enable_payment_recreate" invisible="1" />
+                <button name="action_gocardless_take_payment" type="object" groups="account.group_account_invoice" 
+                    string="Take Payment by GoCardless" class="oe_highlight" attrs="{'invisible':['|','|','|',('gc_display_gc','=',False),('state', 'not in', ('posted')),('invoice_payment_state','not in',('not_paid')),('gc_payment_attempted','=',True)]}" />
+                <button name="action_gocardless_retry_payment" type="object" groups="account.group_account_invoice" 
+                    string="Retry GoCardless Payment" attrs="{'invisible':['|','|','|',('gc_display_gc','=',False),('state', 'not in', ('posted')),('invoice_payment_state','not in',('not_paid')),('gc_payment_attempted','=',False)]}" />
+                <button name="action_gocardless_recreate_payment" type="object" groups="account.group_account_manager" 
+                    string="Recreate GoCardless Payment" attrs="{'invisible':['|','|','|','|',('gc_display_gc','=',False),('state', 'not in', ('posted')),('invoice_payment_state','not in',('not_paid')),('gc_payment_attempted','=',False),('gc_enable_payment_recreate','=',False)]}" 
+                    confirm="You are about to attempt an entirely new payment. This should ONLY be done if the original mandate failed, and a new mandate has been set up. Misuse of this feature may result in double charging. Do you wish to continue?"
+                    />
+
+            </header>
+            <notebook position="inside">
+                <page string="GoCardless" attrs="{'invisible':[['state','in',['draft']]]}">
+                    <h2>GoCardless</h2>
+                    <div attrs="{'invisible':[['gc_display_gc','=',False]]}">
+                        <div class="row mt16">
+                            <div class="col-md-6 col-xs-12">
+                                <h3 modifiers="{}">Payment Info</h3>
+                                <label for="gc_last_payment_attempt" />
+                                <field name="gc_last_payment_attempt" readonly="1" />
+                            </div>
+                        </div>
+                        <div class="row mt16">
+                            <div class="col-md-12 col-xs-12" attrs="{'invisible':[['state','in',['draft']]]}">
+                                <h3 modifiers="{}">Payments</h3>
+                                <group>
+                                    <field name="gc_payments">
+                                        <tree create="false" edit="false" delete="false">
+                                            <field name="claim_date" />
+                                            <field name="gc_payment_id" />
+                                            <field name="gc_payment_state" />
+                                            <field name="post_date" />
+                                            <field name="payout_date" />
+                                        </tree>
+                                    </field>
+                                </group>
+                            </div>
+                        </div>
+                    </div>
+                    <div attrs="{'invisible':[['gc_display_gc','=',True]]}">
+                        <div class="row mt16">
+                            <div class="col-md-12 col xs-12">
+                                <h3>GoCardless is not available for this partner</h3>
+                                <p>Ensure GoCardless is enabled on this partner's record, and that their status is 'Confirmed'</p>
+                            </div>
+                        </div>
+                    </div>
+                </page>
+            </notebook>
+        </field>
+    </record>
+    <record id="gocardless_partner_view" model="ir.ui.view">
+        <field name="name">res.partner.gocardless</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form" />
+        <field name="arch" type="xml">
+            <notebook position="inside">
+                <page string="GoCardless" groups="account.group_account_invoice">
+                    <field name="use_gc" invisible="1" />
+                    <div class="row mt16">
+                        <div class="col-xs-12 col-md-6">
+                            <group string="GoCardless Information">
+                                <field name="gc_state" readonly="1" />
+                                <field name="mandate_id" readonly="1" />
+                            </group>
+                            <button name="action_send_partner_email" 
+                                type="object"
+                                groups="account.group_account_invoice"
+                                string="Send Setup Email" 
+                                attrs="{'invisible':[['gc_state','not in',['setup']]]}"
+                                class="oe_highlight" />
+                            <button name="action_send_partner_email" 
+                                type="object"
+                                groups="account.group_account_invoice"
+                                string="Resend Setup Email"
+                                confirm="Are you sure you want to resend the setup email?" 
+                                attrs="{'invisible':[['gc_state','not in',['pending']]]}" />
+                            <button name="action_send_partner_email" 
+                                type="object"
+                                groups="account.group_account_manager"
+                                string="Recreate Mandate"
+                                confirm="Are you sure you want to restart the setup process? (This will disable GoCardless payments for this partner until they respond)" 
+                                attrs="{'invisible':[['gc_state','not in',['complete']]]}" />
+                        </div>
+                    </div>
+                    <br />
+                </page>
+            </notebook>
+        </field>
+    </record>
+    <record id="config_settings_view_gocardless" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.gocardless</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('settings')]" position="inside">
+                <div class="app_settings_block" data-string="GoCardless" string="GoCardless" data-key="gocardless">
+                    <div style="padding-left: 1rem;">
+                        <h1>GoCardless Integration</h1>
+                        <div class="row mt16">
+                            <div class="col-xs-12 col-md-6">
+                                <group string="Connection">
+                                    <field name="gc_access_token" attrs="{'invisible':[['gc_access_token','in',['',False,None]]]}" readonly="1" />
+                                    <field name="gc_environment" help="Choose between the Live and Sandbox environments. Use Live when you are ready to take real payments." />
+                                </group>
+                                <group col="1">
+                                    <!-- <button class="oe_highlight" type="object" name="gocardless_disconnect" string="Disconnect from GoCardless" attrs="{'invisible':[('gc_access_token','in',['',False,None])]}" /> -->
+                                    <button class="oe_highlight" type="object" name="gocardless_connect" string="Connect to GoCardless" attrs="{'invisible':[['gc_access_token','not in',['',False,None]]]}" />
+                                    <button type="object" name="gocardless_connect" string="Reconnect to GoCardless" attrs="{'invisible':[['gc_access_token','in',['',False,None]]]}" />
+                                </group>                                
+                                <group string="General Settings">
+                                    <field name="gc_description" help="This is the description which will appear at the top of the GoCardless customer forms." />
+                                    <p>
+                                        <b>Please note: Odoo must be accessible from the outside world in order for the GoCardless mandate setup to work!</b>
+                                    </p>
+                                    <field name="gc_custom_domain" help="This is the URL given to customers in the GoCardless invite email. You can override the default by specifying a top-level URL here (e.g. https://odoo.contoso.com)." />
+                                    <p>
+                                        <b>Odoo <u>must</u> be accessible via the domain you enter here, otherwise customers will not be able to complete the GoCardless setup flow! If in any doubt, leave this field blank to use Odoo's usual access URL.
+                                        </b>
+                                    </p>
+                                </group>
+                            </div>
+                            <div class="col-xs-12 col-md-6">
+                                <group string="Maintenance" col="4">
+                                    <button type="object" groups="base.group_system" name="do_full_event_refresh" string="Refresh All Events" 
+                                        confirm="This will re-scan your GoCardless account for up to the last 500 events from all time.
+                                        This may take some time. Are you sure you wish to continue?"
+                                        attrs="{'invisible':[('gc_access_token','in',['', False, None])]}" />
+                                </group>
+                                <group string="Help &amp; Support">
+                                    <p>For more information, please visit 
+                                        <a href="https://www.jotnarsystems.com">Jötnar Systems.</a>
+                                    </p>
+                                    <p></p>
+                                    <p>For technical support, please feel free to email 
+                                        <a href="mailto:support@jotnarsystems.com">support@jotnarsystems.com</a>
+                                    </p>
+                                </group>
+                            </div>
+                        </div>
+                        <div class="row mt16">
+                            <div class="col-md-6 col-xs-12">
+                                <group string="Journaling">
+                                    <field name="gc_keep_journal" />
+                                    <field name="gc_journal_id" options="{'no_quick_create': True,'no_create_edit':True}"/>
+                                </group>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+    <record id="gocardless_settings_action" model="ir.actions.act_window">
+        <field name="name">GoCardless Settings</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_id" ref="config_settings_view_gocardless"/>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+    </record>
+</odoo>
